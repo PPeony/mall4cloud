@@ -73,6 +73,8 @@ public class OrderServiceImpl implements OrderService {
     @Autowired
     private RocketMQTemplate orderCancelTemplate;
     @Autowired
+    private RocketMQTemplate orderProductRankTemplate;
+    @Autowired
     private OrderAddrService orderAddrService;
 
     @Override
@@ -92,11 +94,13 @@ public class OrderServiceImpl implements OrderService {
         List<Order> orders = saveOrder(userId, mergerOrder);
         List<Long> orderIds = new ArrayList<>();
         List<SkuStockLockDTO> skuStockLocks = new ArrayList<>();
+        List<Long> productIds = new ArrayList<>();
         for (Order order : orders) {
             orderIds.add(order.getOrderId());
             List<OrderItem> orderItems = order.getOrderItems();
             for (OrderItem orderItem : orderItems) {
                 skuStockLocks.add(new SkuStockLockDTO(orderItem.getSpuId(), orderItem.getSkuId(), orderItem.getOrderId(), orderItem.getCount()));
+                productIds.add(orderItem.getSpuId());
             }
         }
         // 锁定库存
@@ -107,6 +111,7 @@ public class OrderServiceImpl implements OrderService {
         }
         // 发送消息，如果三十分钟后没有支付，则取消订单
         SendStatus sendStatus = orderCancelTemplate.syncSend(RocketMqConstant.ORDER_CANCEL_TOPIC, new GenericMessage<>(orderIds), RocketMqConstant.TIMEOUT, RocketMqConstant.CANCEL_ORDER_DELAY_LEVEL).getSendStatus();
+        orderProductRankTemplate.syncSend(RocketMqConstant.ORDER_PRODUCT_RANK_TOPIC, new GenericMessage<>(productIds)).getSendStatus();
         if (!Objects.equals(sendStatus,SendStatus.SEND_OK)) {
             // 消息发不出去就抛异常，发的出去无所谓
             throw new Mall4cloudException(ResponseEnum.EXCEPTION);

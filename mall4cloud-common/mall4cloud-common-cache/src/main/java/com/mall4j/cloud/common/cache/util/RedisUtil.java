@@ -10,6 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.ZSetOperations;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
 
 import java.util.*;
@@ -271,5 +272,22 @@ public class RedisUtil {
 				value);
 
 		return !Objects.equals(result, 0L);
+	}
+
+	public static boolean zadd(String key, double score, String value) {
+		ZSetOperations<String, Object> zset = REDIS_TEMPLATE.opsForZSet();
+		return Boolean.TRUE.equals(zset.add(key, value, score));
+	}
+
+	public static Double zInc(String key, double score, String value) {
+		ZSetOperations<String, Object> zset = REDIS_TEMPLATE.opsForZSet();
+		return zset.incrementScore(key, value, score);
+	}
+
+	public static Set<ZSetOperations.TypedTuple<Object>> zrange(String key, long start, long end) {
+		// top3 start=0 end=2
+		ZSetOperations<String, Object> zset = REDIS_TEMPLATE.opsForZSet();
+		Set<ZSetOperations.TypedTuple<Object>> typedTuples = zset.reverseRangeWithScores(key, start, end);
+		return typedTuples;
 	}
 }

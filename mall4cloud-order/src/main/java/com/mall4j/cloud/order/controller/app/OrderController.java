@@ -12,6 +12,7 @@ import com.mall4j.cloud.common.constant.Constant;
 import com.mall4j.cloud.common.order.vo.*;
 import com.mall4j.cloud.common.response.ResponseEnum;
 import com.mall4j.cloud.common.response.ServerResponseEntity;
+import com.mall4j.cloud.common.rocketmq.config.RocketMqConstant;
 import com.mall4j.cloud.common.security.AuthUserContext;
 import com.mall4j.cloud.order.bo.SubmitOrderPayAmountInfoBO;
 import com.mall4j.cloud.order.dto.app.OrderDTO;
@@ -19,11 +20,13 @@ import com.mall4j.cloud.order.model.OrderAddr;
 import com.mall4j.cloud.order.service.OrderAddrService;
 import com.mall4j.cloud.order.service.OrderItemService;
 import com.mall4j.cloud.order.service.OrderService;
+import com.mall4j.cloud.order.vo.RankVO;
 import com.mall4j.cloud.order.vo.SubmitOrderPayInfoVO;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.ZSetOperations;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
@@ -138,6 +141,23 @@ public class OrderController {
             orderPayInfoParam.setMobile(orderAddr.getMobile());
         }
         return ServerResponseEntity.success(orderPayInfoParam);
+    }
+
+    @GetMapping("/top_k_product")
+    public ServerResponseEntity<List<RankVO>> getTopKProduct(int k) {
+        List<RankVO> res = new ArrayList<>();
+        Set<ZSetOperations.TypedTuple<Object>> zrange = RedisUtil.zrange(RocketMqConstant.PRODUCT_ZSET, 0, k);
+        if (zrange != null && zrange.size() > 0) {
+            for (ZSetOperations.TypedTuple<Object> typedTuple : zrange) {
+                String name = typedTuple.getValue().toString();
+                Double score = typedTuple.getScore();
+                RankVO rankVO = new RankVO();
+                rankVO.setName(name);
+                rankVO.setCnt(score.longValue());
+                res.add(rankVO);
+            }
+        }
+        return ServerResponseEntity.success(res);
     }
 
     /**

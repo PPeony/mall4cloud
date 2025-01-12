@@ -31,6 +31,8 @@ public class RocketMqConstant {
      */
     public static final String ORDER_CANCEL_TOPIC = "order-cancel-topic";
 
+    public static final String ORDER_PRODUCT_RANK_TOPIC = "order-product-rank-topic";
+    public static final String ORDER_PRODUCT_RANK_CONSUMER_GROUP = "order-product-consumer-group";
     /**
      * 订单支付成功
      */
@@ -45,6 +47,6 @@ public class RocketMqConstant {
      */
     public static final String CANAL_TOPIC = "canal-topic";
 
-
+    public static final String PRODUCT_ZSET = "order-product-rank";
 
 }

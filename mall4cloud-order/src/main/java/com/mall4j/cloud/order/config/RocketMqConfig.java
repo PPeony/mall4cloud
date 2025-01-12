@@ -38,4 +38,10 @@ public class RocketMqConfig {
     public RocketMQTemplate orderNotifyStockTemplate() {
         return rocketMqAdapter.getTemplateByTopicName(RocketMqConstant.ORDER_NOTIFY_STOCK_TOPIC);
     }
+
+    @Lazy
+    @Bean(destroyMethod = "destroy")
+    public RocketMQTemplate orderProductRankTemplate() {
+        return rocketMqAdapter.getTemplateByTopicName(RocketMqConstant.ORDER_PRODUCT_RANK_TOPIC);
+    }
 }
